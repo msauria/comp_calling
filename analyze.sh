@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# source analyze.sh PROJECT BINSIZE OUT_PREFIX
+# source analyze.sh PROJECT OUT_PREFIX
 
 CHROMS=($(eval {1..19}) X)
 NCPUS=1
