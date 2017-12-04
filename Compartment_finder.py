@@ -29,7 +29,7 @@ def main(args):
   data = numpy.zeros((chr_indices[-1], chr_indices[-1], 2), dtype=numpy.float64)
   mapping = numpy.zeros((chr_indices[-1], 3), dtype=numpy.int32)
   for i, chrom in enumerate(args.CHROMS):
-    data[chr_indices[i]:chr_indices[i + 1], chr_indices[i]:chr_indices[i + 1], :] = cis_data[chrom]
+    #data[chr_indices[i]:chr_indices[i + 1], chr_indices[i]:chr_indices[i + 1], :] = cis_data[chrom]
     del cis_data[chrom]
     mapping[chr_indices[i]:chr_indices[i + 1], 0] = i
     mapping[chr_indices[i]:chr_indices[i + 1], 1:] = cis_mapping[chrom]
@@ -50,14 +50,21 @@ def main(args):
   data[where[0], where[1], 0] /= data[where[0], where[1], 1]
   data[where[0], where[1], 1] = 1
   data[where[0], where[1], 0] = numpy.log(data[where[0], where[1], 0])
+  scores = data[where[0], where[1], 0]
+  scores.sort()
+  data[where[0], where[1], 0] = numpy.maximum(scores[int(scores.shape[0]*0.05)], numpy.minimum(scores[int(scores.shape[0]*0.95)],
+                                  data[where[0], where[1], 0]))
+
   data2 = numpy.copy(data)
   data2.fill(0)
-
   for i in range(chr_indices[-1] - 1):
     print >> sys.stderr, ("\r%s\rCorrelating %i of %i bins") % (' '*50, i, chr_indices[-1]),
     for j in range(i + 1, chr_indices[-1]):
       try:
-        corr = numpy.corrcoef(data[i, :, 0], data[j, :, 0])[0, 1]
+        where = numpy.where((data[i, :, 1] > 0) & (data[j, :, 1] > 0))[0]
+        if where.shape[0] < 3:
+          continue
+        corr = numpy.corrcoef(data[i, where, 0], data[j, where, 0])[0, 1]
         if corr != numpy.nan and abs(corr) < numpy.inf:
           data2[i, j, 0] = corr
           data2[i, j, 1] = 1
