@@ -38,7 +38,6 @@ def main(args):
     sfend = chr_indices[chrint]
     efend = chr_indices[chrint + 1]
     valid = numpy.where(hic.filter[sfend:efend])[0] + sfend
-    print chrom, valid.shape[0]
     if valid.shape[0] < 2:
       print >> sys.stderr, ("Insufficient information for %s\n") % (chrom),
       continue
@@ -77,7 +76,7 @@ def main(args):
     chrom2 = args.CHROMS[Y]
     data[chr_indices[X]:chr_indices[X + 1], chr_indices[Y]:chr_indices[Y + 1], :] = hic.trans_heatmap(
       chrom, chrom2, binsize=args.BINSIZE, start1=mapping[chr_indices[X], 1], stop1=mapping[chr_indices[X + 1] - 1, 2],
-      start2=mapping[chr_indices[Y], 1], stop2=mapping[chr_indices[Y + 1] - 1, 2], datatype='fend')
+      start2=mapping[chr_indices[Y], 1], stop2=mapping[chr_indices[Y + 1] - 1, 2], datatype=args.DATATYPE)
   if comm is not None:
     for i in range(1, num_procs):
       for j in range(node_ranges[i], node_ranges[i + 1]):
@@ -208,7 +207,7 @@ def worker():
     chrom2 = args.CHROMS[Y]
     data = hic.trans_heatmap(
       chrom, chrom2, binsize=args.BINSIZE, start1=bounds[chrom][0, 0], stop1=bounds[chrom][-1, 1],
-      start2=bounds[chrom2][0, 0], stop2=bounds[chrom2][-1, 1], datatype='fend')
+      start2=bounds[chrom2][0, 0], stop2=bounds[chrom2][-1, 1], datatype=args.DATATYPE)
     comm.Send(data.flatten(), dest=0, tag=(X * len(args.CHROMS) + Y))
 
   N = comm.bcast(None, root=0)
@@ -243,6 +242,7 @@ def generate_parser():
                           add_help=True)
   parser.add_argument(metavar='HIC', dest='HIC', action='store', type=str, help='Input HiFive Hi-C project file')
   parser.add_argument(metavar='OUTPUT', dest="OUTPUT", action='store', type=str, help='Output file prefix')
+  parser.add_argument('-d', metavar='DATATYPE', dest="DATATYPE", action='store', choices=['raw', 'fend'], default='raw', help='Type of corrected data to use')
   parser.add_argument('-b', metavar='BINSIZE', dest="BINSIZE", action='store', type=int, default=0, help='Resolution to bin data at')
   parser.add_argument('-c', metavar='CHROMS', dest="CHROMS", action='store', type=str, default='', help='Comma-separated list of chromosomes to find comparments for')
   parser.add_argument('-p', dest="PLOT", action='store_true', help='Plot heatmaps')
